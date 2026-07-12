@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formulario de Solicitud — Invitia Studio</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="nav" id="mainNav">
+  <div class="nav-inner">
+    <div class="brand"><b>Invitia</b> Studio</div>
+    <nav class="links"><a href="index.html">Volver al sitio</a></nav>
+  </div>
+</header>
+
+<!-- SELECTOR DE TIPO -->
+<div class="type-selector" id="typeSelector">
+  <span class="eyebrow">Formulario de solicitud</span>
+  <h1>¿Para qué tipo de evento es tu invitación?</h1>
+  <p>Selecciona una opción para ver el formulario correspondiente.</p>
+  <div class="type-grid" id="typeGrid"></div>
+</div>
+
+<!-- ENCABEZADO -->
+<div class="form-page-hero hidden-el" id="formHero">
+  <div class="wrap">
+    <span class="eyebrow" id="formEyebrow">Formulario de solicitud</span>
+    <h1 id="formTitle"></h1>
+    <p id="formIntro"></p>
+  </div>
+</div>
+
+<div class="form-shell hidden-el" id="formShell">
+  <div class="wrap">
+    <div class="progress-wrap">
+      <div class="progress-top"><span>Progreso del formulario</span><span id="progressPct">0%</span></div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <div class="draft-banner hidden-el" id="draftBanner">
+      Recuperamos un borrador guardado de esta solicitud. <button type="button" id="discardDraft">Empezar de nuevo</button>
+    </div>
+    <form id="requestForm"></form>
+    <div class="confirm-screen hidden-el" id="confirmScreen">
+      <div class="check-circle">✓</div>
+      <h2>Hemos recibido tu solicitud correctamente</h2>
+      <p>Gracias por confiar en nosotros. Nos pondremos en contacto contigo para los siguientes pasos del diseño de tu invitación.</p>
+      <a href="index.html" class="btn btn-ghost">Volver al sitio</a>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE REVISIÓN ANTES DE ENVIAR -->
+<div class="modal-overlay hidden-el" id="reviewModal">
+  <div class="modal-box">
+    <button class="modal-close" id="closeReview">×</button>
+    <h3>Revisa tu información antes de enviar</h3>
+    <ul class="review-list" id="reviewList"></ul>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="keepEditing">Seguir editando</button>
+      <button type="button" class="btn btn-solid" id="confirmSend">Confirmar y enviar</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-bottom">© <span id="year"></span> Invitia Studio. Todos los derechos reservados.</div>
+  </div>
+</footer>
+
+<script src="form-config.js"></script>
+<script>
+document.getElementById('year').textContent = new Date().getFullYear();
+
+const params = new URLSearchParams(window.location.search);
+let tipo = params.get('tipo');
+
+const typeMeta = {
+  xv:{mark:'XV', label:'XV Años'},
+  bodas:{mark:'B', label:'Bodas'},
+  babyshower:{mark:'BS', label:'Baby Shower'},
+  cumpleanos:{mark:'C', label:'Cumpleaños'},
+  eventos:{mark:'E', label:'Eventos'},
+};
+
+if(!tipo || !FORM_CONFIGS[tipo]){
+  document.getElementById('typeGrid').innerHTML = Object.keys(typeMeta).map(key=>`
+    <a class="type-card" href="form.html?tipo=${key}">
+      <div class="t-mark">${typeMeta[key].mark}</div>
+      <div>${typeMeta[key].label}</div>
+    </a>`).join('');
+} else {
+  document.getElementById('typeSelector').classList.add('hidden-el');
+  document.getElementById('formHero').classList.remove('hidden-el');
+  document.getElementById('formShell').classList.remove('hidden-el');
+  initForm(tipo);
+}
+
+function nextOrderNumber(){
+  let counter = parseInt(localStorage.getItem('orderCounter') || '0', 10);
+  counter += 1;
+  localStorage.setItem('orderCounter', String(counter));
+  return 'INV-' + String(counter).padStart(4, '0');
+}
+
+function renderField(f){
+  const req = f.required ? 'required' : '';
+  const wrapClass = f.full ? 'field full' : 'field';
+  switch(f.type){
+    case 'text': case 'email': case 'tel': case 'date': case 'time': case 'number':
+      return `<div class="${wrapClass}"><label>${f.label}</label><input type="${f.type}" name="${f.name}" ${req}></div>`;
+    case 'textarea':
+      return `<div class="${wrapClass}"><label>${f.label}</label><textarea name="${f.name}" ${req}></textarea></div>`;
+    case 'file':
+      return `<div class="${wrapClass}">
+        <label>${f.label}</label>
+        <label class="file-drop">${f.hint || 'Selecciona uno o varios archivos'}<input type="file" name="${f.name}" ${f.multiple?'multiple':''} accept="${f.accept||''}"></label>
+        <div class="file-list" data-list="${f.name}"></div>
+        <div class="photo-preview-grid" data-preview="${f.name}"></div>
+      </div>`;
+    default: return '';
+  }
+}
+
+function initForm(tipoKey){
+  const cfg = FORM_CONFIGS[tipoKey];
+  document.getElementById('formEyebrow').textContent = typeMeta[tipoKey].label;
+  document.getElementById('formTitle').textContent = cfg.title;
+  document.getElementById('formIntro').textContent = cfg.intro;
+
+  const draftKey = 'draft_' + tipoKey;
+  const existingDraft = localStorage.getItem(draftKey);
+  let photoData = {}; // { fieldName: [{name, dataUrl}] }
+
+  const formEl = document.getElementById('requestForm');
+  formEl.innerHTML = cfg.sections.map((s, idx)=>`
+    <details class="f-section" ${idx===0?'open':''}>
+      <summary>${s.title}</summary>
+      <div class="f-body">
+        <div class="field-grid">
+          ${s.fields.map(f => f.full || f.type==='file' || f.type==='textarea' ? '' : renderField(f)).join('')}
+        </div>
+        ${s.fields.filter(f=>f.full || f.type==='file' || f.type==='textarea').map(f=>renderField(f)).join('')}
+      </div>
+    </details>
+  `).join('') + `
+    <div class="form-submit-row">
+      <button type="submit" class="btn btn-solid">Revisar y enviar</button>
+    </div>
+  `;
+
+  const allFieldNames = cfg.sections.flatMap(s=>s.fields.map(f=>f.name));
+
+  /* ---- Progreso ---- */
+  function updateProgress(){
+    let filled = 0;
+    allFieldNames.forEach(name=>{
+      const el = formEl.querySelector(`[name="${CSS.escape(name)}"]`);
+      if(!el) return;
+      if(el.type === 'file'){ if(el.files && el.files.length) filled++; }
+      else if(el.value && el.value.trim() !== ''){ filled++; }
+    });
+    const pct = Math.round((filled / allFieldNames.length) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressPct').textContent = pct + '%';
+  }
+
+  /* ---- Restaurar borrador ---- */
+  if(existingDraft){
+    document.getElementById('draftBanner').classList.remove('hidden-el');
+    try{
+      const draftData = JSON.parse(existingDraft);
+      Object.entries(draftData).forEach(([key, value])=>{
+        if(key === '__photoData') return;
+        const el = formEl.querySelector(`[name="${CSS.escape(key)}"]`);
+        if(el && el.type !== 'file'){ el.value = value; }
+      });
+      if(draftData.__photoData){
+        photoData = draftData.__photoData;
+        Object.keys(photoData).forEach(name=> renderPhotoPreview(name));
+      }
+    }catch(err){ console.error(err); }
+  }
+
+  document.getElementById('discardDraft').addEventListener('click', ()=>{
+    localStorage.removeItem(draftKey);
+    formEl.reset();
+    photoData = {};
+    formEl.querySelectorAll('.photo-preview-grid').forEach(g=> g.innerHTML = '');
+    formEl.querySelectorAll('.file-list').forEach(l=> l.textContent = '');
+    document.getElementById('draftBanner').classList.add('hidden-el');
+    updateProgress();
+  });
+
+  /* ---- Fotos: convertir a base64 para poder verlas y descargarlas en el panel ---- */
+  const MAX_TOTAL_BYTES = 3 * 1024 * 1024; // límite prudente para no saturar localStorage
+  function renderPhotoPreview(name){
+    const grid = formEl.querySelector(`[data-preview="${CSS.escape(name)}"]`);
+    if(!grid) return;
+    grid.innerHTML = (photoData[name]||[]).map(p=>`<img src="${p.dataUrl}" alt="${p.name}">`).join('');
+  }
+  formEl.querySelectorAll('input[type=file]').forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      const listEl = formEl.querySelector(`[data-list="${CSS.escape(inp.name)}"]`);
+      if(listEl) listEl.textContent = Array.from(inp.files).map(f=>f.name).join(', ');
+
+      if(inp.accept && inp.accept.includes('image')){
+        photoData[inp.name] = [];
+        let totalBytes = 0;
+        let skipped = false;
+        const files = Array.from(inp.files);
+        let processed = 0;
+        if(files.length === 0){ renderPhotoPreview(inp.name); updateProgress(); saveDraft(); }
+        files.forEach(file=>{
+          totalBytes += file.size;
+          if(totalBytes > MAX_TOTAL_BYTES){ skipped = true; processed++; return; }
+          const reader = new FileReader();
+          reader.onload = ()=>{
+            photoData[inp.name].push({ name:file.name, dataUrl: reader.result });
+            processed++;
+            if(processed === files.length){
+              renderPhotoPreview(inp.name);
+              if(skipped) listEl.textContent += ' (algunas imágenes no se guardaron por ser muy pesadas)';
+              updateProgress();
+              saveDraft();
+            }
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+      updateProgress();
+    });
+  });
+
+  /* ---- Autoguardado ---- */
+  function saveDraft(){
+    const data = {};
+    const formData = new FormData(formEl);
+    for(const [key, value] of formData.entries()){
+      if(value instanceof File) continue;
+      data[key] = value;
+    }
+    data.__photoData = photoData;
+    try{ localStorage.setItem(draftKey, JSON.stringify(data)); }catch(err){ console.warn('No se pudo guardar el borrador (posiblemente por el tamaño de las fotos).'); }
+  }
+  formEl.addEventListener('input', ()=>{ updateProgress(); saveDraft(); });
+  formEl.addEventListener('change', updateProgress);
+  updateProgress();
+
+  /* ---- Revisión antes de enviar ---- */
+  const fieldLabels = {};
+  cfg.sections.forEach(s=> s.fields.forEach(f=> fieldLabels[f.name] = f.label));
+
+  formEl.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const formData = new FormData(formEl);
+    const data = {};
+    for(const [key, value] of formData.entries()){
+      if(value instanceof File) continue;
+      data[key] = value;
+    }
+    const reviewList = document.getElementById('reviewList');
+    reviewList.innerHTML = Object.entries(data).filter(([k,v])=> v && v.toString().trim() !== '').map(([k,v])=>
+      `<li><b>${fieldLabels[k] || k}</b><span>${v}</span></li>`
+    ).join('') + Object.keys(photoData).filter(k=>photoData[k].length).map(k=>
+      `<li><b>${fieldLabels[k] || k}</b><span>${photoData[k].length} foto(s) adjunta(s)</span></li>`
+    ).join('');
+    document.getElementById('reviewModal').classList.remove('hidden-el');
+
+    document.getElementById('confirmSend').onclick = ()=>{
+      finalizeSubmit(data);
+    };
+  });
+  document.getElementById('keepEditing').addEventListener('click', ()=> document.getElementById('reviewModal').classList.add('hidden-el'));
+  document.getElementById('closeReview').addEventListener('click', ()=> document.getElementById('reviewModal').classList.add('hidden-el'));
+
+  function finalizeSubmit(data){
+    const orderNum = nextOrderNumber();
+    data.numeroPedido = orderNum;
+    data.tipoEvento = typeMeta[tipoKey].label;
+    data.tipoEventoKey = tipoKey;
+    data.estado = 'Nuevo';
+    data.notasPrivadas = '';
+    data.fechaCreacion = new Date().toISOString();
+    data.id = 'sol_' + Date.now();
+    data.fotos = photoData; // { campo: [{name, dataUrl}] }
+
+    try{
+      localStorage.setItem(data.id, JSON.stringify(data));
+      localStorage.removeItem(draftKey);
+    }catch(err){
+      console.error('Error guardando la solicitud (posiblemente por el peso de las fotos)', err);
+      alert('Tu solicitud se guardó, pero algunas fotos pesaban demasiado y no se incluyeron. Puedes enviarlas luego por WhatsApp.');
+    }
+
+    document.getElementById('reviewModal').classList.add('hidden-el');
+    document.getElementById('requestForm').classList.add('hidden-el');
+    document.querySelector('.progress-wrap').classList.add('hidden-el');
+    document.getElementById('draftBanner').classList.add('hidden-el');
+    document.getElementById('confirmScreen').classList.remove('hidden-el');
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+}
+</script>
+</body>
+</html>

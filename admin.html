@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de administrador — Invitia Studio</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="admin-body">
+
+  <!-- LOGIN -->
+  <div class="admin-login-wrap" id="loginWrap">
+    <div class="admin-login-box">
+      <h1>Panel de administrador</h1>
+      <p>Acceso privado. Ingresa tus credenciales para continuar.</p>
+      <div class="field"><label>Usuario</label><input type="text" id="adminUser" placeholder="ethana"></div>
+      <div class="field"><label>Contraseña</label><input type="password" id="adminPass" placeholder="••••••••"></div>
+      <div class="btn btn-solid" style="width:100%; justify-content:center;" id="loginBtn">Ingresar</div>
+      <p style="font-size:12px; color:var(--grayDark); margin-top:16px;">Usuario: <b>ethana</b> — Contraseña:
+        <b>etHana2011</b></p>
+    </div>
+  </div>
+
+  <!-- PANEL -->
+  <div class="hidden-el" id="panelWrap">
+    <header class="admin-header">
+      <div class="wrap">
+        <div class="brand"><b>Invitia</b> Admin</div>
+        <div class="admin-tabs">
+          <button class="admin-tab active" data-tab="dashboard">Dashboard</button>
+          <button class="admin-tab" data-tab="clientes">Clientes</button>
+        </div>
+        <button class="btn btn-ghost" id="logoutBtn">Cerrar sesión</button>
+      </div>
+    </header>
+
+    <div class="admin-shell">
+
+      <!-- DASHBOARD -->
+      <div id="tabDashboard">
+        <div class="admin-stats" id="adminStats"></div>
+        <div class="section-head" style="text-align:left; margin:0 0 16px;">
+          <h2 style="font-size:20px;">Eventos por categoría</h2>
+        </div>
+        <div class="stat-breakdown" id="categoryBreakdown"></div>
+      </div>
+
+      <!-- CLIENTES -->
+      <div id="tabClientes" class="hidden-el">
+        <div class="admin-filters">
+          <input type="text" id="filterName" placeholder="Buscar por nombre">
+          <input type="text" id="filterWhatsapp" placeholder="Buscar por WhatsApp">
+          <select id="filterEvent">
+            <option value="">Todos los eventos</option>
+            <option value="XV Años">XV Años</option>
+            <option value="Bodas">Bodas</option>
+            <option value="Baby Shower">Baby Shower</option>
+            <option value="Cumpleaños">Cumpleaños</option>
+            <option value="Eventos">Eventos</option>
+          </select>
+          <select id="filterStatus">
+            <option value="">Todos los estados</option>
+            <option>Nuevo</option>
+            <option>En revisión</option>
+            <option>Diseño en proceso</option>
+            <option>Esperando aprobación</option>
+            <option>Finalizado</option>
+            <option>Entregado</option>
+          </select>
+          <select id="sortBy">
+            <option value="fechaCreacion_desc">Más recientes primero</option>
+            <option value="fechaCreacion_asc">Más antiguos primero</option>
+            <option value="nombre_asc">Nombre (A-Z)</option>
+          </select>
+        </div>
+
+        <div class="export-row">
+          <button class="btn btn-ghost" id="exportCsv">Exportar a CSV</button>
+          <button class="btn btn-ghost" id="exportExcel">Exportar a Excel</button>
+          <button class="btn btn-ghost" id="exportPdf">Exportar a PDF</button>
+        </div>
+
+        <table class="client-table">
+          <thead>
+            <tr>
+              <th>N.º pedido</th>
+              <th>Nombre</th>
+              <th>Evento</th>
+              <th>Fecha del evento</th>
+              <th>Estado</th>
+              <th>WhatsApp</th>
+              <th>Enviado</th>
+            </tr>
+          </thead>
+          <tbody id="clientTableBody"></tbody>
+        </table>
+        <div id="emptyState"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL DETALLE -->
+  <div class="modal-overlay hidden-el" id="detailModal">
+    <div class="modal-box wide">
+      <button class="modal-close" id="closeDetail">×</button>
+      <h3 id="detailTitle"></h3>
+      <div class="detail-grid" id="detailGrid"></div>
+      <div id="detailPhotosWrap"></div>
+      <div class="field">
+        <label>Estado</label>
+        <select class="status-select-lg" id="detailStatus">
+          <option>Nuevo</option>
+          <option>En revisión</option>
+          <option>Diseño en proceso</option>
+          <option>Esperando aprobación</option>
+          <option>Finalizado</option>
+          <option>Entregado</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Notas privadas (solo visibles para el administrador)</label>
+        <textarea id="detailNotes" style="min-height:90px;"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>addEventListener
+    const ADMIN_USER = 'ethana';
+    const ADMIN_PASS = 'etHana2011'; // Cambia esta contraseña antes de publicar el sitio. Protección solo de demostración (front-end).
+    const ESTADOS = ['Nuevo', 'En revisión', 'Diseño en proceso', 'Esperando aprobación', 'Finalizado', 'Entregado'];
+
+    /* ================= LOGIN ================= */
+    document.getElementById('loginBtn').addEventListener('click', login);
+    document.getElementById('adminPass').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+    function login() {
+      const u = document.getElementById('adminUser').value.trim();
+      const p = document.getElementById('adminPass').value;
+      if (u === ADMIN_USER && p === ADMIN_PASS) {
+        document.getElementById('loginWrap').classList.add('hidden-el');
+        document.getElementById('panelWrap').classList.remove('hidden-el');
+        renderAll();
+      } else { alert('Usuario o contraseña incorrectos.'); }
+    }
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      document.getElementById('panelWrap').classList.add('hidden-el');
+      document.getElementById('loginWrap').classList.remove('hidden-el');
+      document.getElementById('adminPass').value = '';
+    });
+
+    /* ================= TABS ================= */
+    document.querySelectorAll('.admin-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tabDashboard').classList.toggle('hidden-el', tab.dataset.tab !== 'dashboard');
+        document.getElementById('tabClientes').classList.toggle('hidden-el', tab.dataset.tab !== 'clientes');
+      });
+    });
+
+    /* ================= DATOS ================= */
+    function getAllRequests() {
+      const items = [];
+      Object.keys(localStorage).filter(k => k.startsWith('sol_')).forEach(k => {
+        try { items.push(JSON.parse(localStorage.getItem(k))); } catch (err) { }
+      });
+      return items;
+    }
+    function saveRequest(item) { localStorage.setItem(item.id, JSON.stringify(item)); }
+    function clientDisplayName(it) {
+      return it.nombreCliente || it.nombreFestejado || it.nombreNovia || it.nombreMama || it.nombreEvento || 'Sin nombre';
+    }
+    function slug(s) { return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-'); }
+
+    /* ================= RENDER ================= */
+    function renderAll() {
+      const all = getAllRequests();
+      renderStats(all);
+      renderTable(applyFilters(all));
+    }
+
+    function renderStats(all) {
+      const stats = document.getElementById('adminStats');
+      const nuevos = all.filter(i => i.estado === 'Nuevo').length;
+      const pendientes = all.filter(i => !['Finalizado', 'Entregado'].includes(i.estado)).length;
+      const completados = all.filter(i => ['Finalizado', 'Entregado'].includes(i.estado)).length;
+      stats.innerHTML = `
+    <div class="stat-card"><div class="num">${all.length}</div><div class="lbl">Total recibidos</div></div>
+    <div class="stat-card"><div class="num">${nuevos}</div><div class="lbl">Nuevos</div></div>
+    <div class="stat-card"><div class="num">${pendientes}</div><div class="lbl">Pendientes</div></div>
+    <div class="stat-card"><div class="num">${completados}</div><div class="lbl">Completados</div></div>
+    <div class="stat-card"><div class="num">${new Set(all.map(i => i.tipoEvento)).size}</div><div class="lbl">Categorías activas</div></div>
+  `;
+      const byCategory = {};
+      all.forEach(i => { byCategory[i.tipoEvento] = (byCategory[i.tipoEvento] || 0) + 1; });
+      document.getElementById('categoryBreakdown').innerHTML = Object.entries(byCategory).map(([k, v]) =>
+        `<span>${k}: <b>${v}</b></span>`
+      ).join('') || '<span>Aún no hay solicitudes.</span>';
+    }
+
+    function applyFilters(all) {
+      const name = document.getElementById('filterName').value.toLowerCase();
+      const wa = document.getElementById('filterWhatsapp').value.toLowerCase();
+      const event = document.getElementById('filterEvent').value;
+      const status = document.getElementById('filterStatus').value;
+      const sortVal = document.getElementById('sortBy').value;
+      let filtered = all.filter(it => {
+        const cname = clientDisplayName(it).toLowerCase();
+        if (name && !cname.includes(name)) return false;
+        if (wa && !(it.whatsapp || '').toLowerCase().includes(wa)) return false;
+        if (event && it.tipoEvento !== event) return false;
+        if (status && it.estado !== status) return false;
+        return true;
+      });
+      if (sortVal === 'fechaCreacion_desc') filtered.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion));
+      if (sortVal === 'fechaCreacion_asc') filtered.sort((a, b) => new Date(a.fechaCreacion) - new Date(b.fechaCreacion));
+      if (sortVal === 'nombre_asc') filtered.sort((a, b) => clientDisplayName(a).localeCompare(clientDisplayName(b)));
+      return filtered;
+    }
+
+    ['filterName', 'filterWhatsapp', 'filterEvent', 'filterStatus', 'sortBy'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => renderTable(applyFilters(getAllRequests())));
+      document.getElementById(id).addEventListener('change', () => renderTable(applyFilters(getAllRequests())));
+    });
+
+    function renderTable(items) {
+      const body = document.getElementById('clientTableBody');
+      const emptyState = document.getElementById('emptyState');
+      if (items.length === 0) {
+        body.innerHTML = '';
+        emptyState.innerHTML = '<p class="empty-note">No se encontraron solicitudes con estos filtros.</p>';
+        return;
+      }
+      emptyState.innerHTML = '';
+      body.innerHTML = items.map(it => `
+    <tr class="clickable" data-id="${it.id}">
+      <td>${it.numeroPedido || '—'}</td>
+      <td>${clientDisplayName(it)}</td>
+      <td>${it.tipoEvento || '—'}</td>
+      <td>${it.fecha || '—'}</td>
+      <td><span class="badge status-${slug(it.estado)}">${it.estado || 'Nuevo'}</span></td>
+      <td>${it.whatsapp || '—'}</td>
+      <td>${it.fechaCreacion ? new Date(it.fechaCreacion).toLocaleDateString() : '—'}</td>
+    </tr>
+  `).join('');
+      body.querySelectorAll('tr[data-id]').forEach(row => {
+        row.addEventListener('click', () => openDetail(row.dataset.id));
+      });
+    }
+
+    /* ================= DETALLE ================= */
+    const EXCLUDE_KEYS = ['id', 'estado', 'notasPrivadas', 'fotos', 'numeroPedido', 'tipoEvento', 'tipoEventoKey', 'fechaCreacion'];
+    function openDetail(id) {
+      const item = getAllRequests().find(i => i.id === id);
+      if (!item) return;
+      document.getElementById('detailTitle').textContent = `${item.numeroPedido || ''} — ${clientDisplayName(item)}`;
+      const grid = document.getElementById('detailGrid');
+      grid.innerHTML = Object.entries(item).filter(([k, v]) => !EXCLUDE_KEYS.includes(k) && v && v.toString().trim() !== '')
+        .map(([k, v]) => `<div><b>${k}:</b> ${v}</div>`).join('');
+      grid.innerHTML += `<div><b>Enviado:</b> ${item.fechaCreacion ? new Date(item.fechaCreacion).toLocaleString() : '—'}</div>`;
+
+      const photosWrap = document.getElementById('detailPhotosWrap');
+      const allPhotos = [];
+      if (item.fotos) { Object.values(item.fotos).forEach(arr => allPhotos.push(...arr)); }
+      photosWrap.innerHTML = allPhotos.length
+        ? `<div class="field"><label>Fotografías (clic para descargar)</label><div class="detail-photos">${allPhotos.map(p => `<a href="${p.dataUrl}" download="${p.name}"><img src="${p.dataUrl}" alt="${p.name}"></a>`).join('')}</div></div>`
+        : `<div class="field"><label>Fotografías</label><p style="color:var(--grayDark); font-size:13px;">Este cliente no adjuntó fotografías (o pesaban demasiado para guardarse en esta demo).</p></div>`;
+
+      document.getElementById('detailStatus').value = item.estado || 'Nuevo';
+      document.getElementById('detailNotes').value = item.notasPrivadas || '';
+
+      document.getElementById('detailStatus').onchange = (e) => { item.estado = e.target.value; saveRequest(item); renderAll(); };
+      document.getElementById('detailNotes').oninput = (e) => { item.notasPrivadas = e.target.value; saveRequest(item); };
+
+      document.getElementById('detailModal').classList.remove('hidden-el');
+    }
+    document.getElementById('closeDetail').addEventListener('click', () => document.getElementById('detailModal').classList.add('hidden-el'));
+
+    /* ================= EXPORTAR ================= */
+    function currentFilteredList() { return applyFilters(getAllRequests()); }
+    function downloadBlob(content, filename, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    }
+    const EXPORT_COLUMNS = ['numeroPedido', 'nombre', 'tipoEvento', 'fecha', 'estado', 'whatsapp', 'correo', 'fechaCreacion'];
+    function buildRows() {
+      return currentFilteredList().map(it => ({
+        numeroPedido: it.numeroPedido || '',
+        nombre: clientDisplayName(it),
+        tipoEvento: it.tipoEvento || '',
+        fecha: it.fecha || '',
+        estado: it.estado || '',
+        whatsapp: it.whatsapp || '',
+        correo: it.correo || '',
+        fechaCreacion: it.fechaCreacion ? new Date(it.fechaCreacion).toLocaleString() : '',
+      }));
+    }
+
+    document.getElementById('exportCsv').addEventListener('click', () => {
+      const rows = buildRows();
+      const header = EXPORT_COLUMNS.join(',');
+      const lines = rows.map(r => EXPORT_COLUMNS.map(c => `"${(r[c] || '').toString().replace(/"/g, '""')}"`).join(','));
+      downloadBlob([header, ...lines].join('\n'), 'solicitudes.csv', 'text/csv;charset=utf-8;');
+    });
+
+    document.getElementById('exportExcel').addEventListener('click', () => {
+      const rows = buildRows();
+      const headerHtml = `<tr>${EXPORT_COLUMNS.map(c => `<th>${c}</th>`).join('')}</tr>`;
+      const bodyHtml = rows.map(r => `<tr>${EXPORT_COLUMNS.map(c => `<td>${r[c] || ''}</td>`).join('')}</tr>`).join('');
+      const html = `<html><head><meta charset="UTF-8"></head><body><table>${headerHtml}${bodyHtml}</table><\/body></html>`;
+      downloadBlob(html, 'solicitudes.xls', 'application/vnd.ms-excel');
+    });
+
+    document.getElementById('exportPdf').addEventListener('click', () => {
+      const rows = buildRows();
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(14); doc.text('Invitia Studio — Solicitudes', 14, 16);
+      doc.setFontSize(9);
+      let y = 28;
+      doc.text('N. Pedido | Nombre | Evento | Fecha | Estado | WhatsApp', 14, y);
+      y += 6;
+      rows.forEach(r => {
+        if (y > 280) { doc.addPage(); y = 20; }
+        const line = `${r.numeroPedido} | ${r.nombre} | ${r.tipoEvento} | ${r.fecha} | ${r.estado} | ${r.whatsapp}`;
+        doc.text(line, 14, y);
+        y += 6;
+      });
+      doc.save('solicitudes.pdf');
+    });
+
+    renderAll();
+  </script>
+</body>
+
+</html>

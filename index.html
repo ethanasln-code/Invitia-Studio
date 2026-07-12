@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invitia Studio</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="nav" id="mainNav">
+  <div class="nav-inner">
+    <div class="brand"><b>Invitia</b> Studio</div>
+    <nav class="links">
+      <a href="#nosotros">Nosotros</a>
+      <a href="#servicios">Servicios</a>
+      <a href="#incluye">Incluye</a>
+      <a href="#paquetes">Paquetes</a>
+      <a href="#formulario">Contacto</a>
+    </nav>
+    <a href="#servicios" class="nav-cta">Comenzar formulario</a>
+    <button class="burger" id="burgerBtn" aria-label="Menú"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <span class="eyebrow">Invitaciones digitales</span>
+    <h1>Invitaciones digitales <em>personalizadas</em> para cada celebración</h1>
+    <p class="sub">Diseños únicos creados desde cero para hacer inolvidable uno de los días más importantes.</p>
+    <div class="btn-row">
+      <a href="#servicios" class="btn btn-solid">Comenzar formulario</a>
+      <a href="#paquetes" class="btn btn-ghost">Ver paquetes</a>
+    </div>
+  </div>
+</section>
+
+<section class="about" id="nosotros">
+  <div class="wrap about-grid">
+    <div class="about-copy">
+      <span class="eyebrow">Sobre nosotros</span>
+      <h2>Cada invitación se diseña completamente desde cero</h2>
+      <p>No utilizamos plantillas. Cada cliente recibe un diseño exclusivo, pensado desde la primera línea para reflejar la personalidad del festejado y la historia que quiere contar a sus invitados.</p>
+      <p>Tú completas el formulario con los detalles de tu evento y nosotros creamos tu invitación digital de principio a fin.</p>
+      <ul class="about-points reveal">
+        <li><span class="dot"></span> Diseño 100% personalizado, sin plantillas</li>
+        <li><span class="dot"></span> Experiencia interactiva para cada invitado</li>
+        <li><span class="dot"></span> Acompañamiento durante todo el proceso</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="servicios">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Servicios</span>
+      <h2>Un diseño para cada tipo de celebración</h2>
+      <p>Cada invitación se crea desde cero, sin plantillas, adaptada al tipo de evento y a la historia que quieres contar.</p>
+    </div>
+    <div class="services-grid" id="servicesGrid"></div>
+  </div>
+</section>
+
+<section id="incluye">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Todo lo que incluyen nuestras invitaciones</span>
+      <h2>Cada invitación incluye</h2>
+      <p>Un conjunto de funciones pensadas para sorprender a cada invitado desde el primer clic.</p>
+    </div>
+    <div class="features-grid" id="featuresGrid"></div>
+  </div>
+</section>
+
+<section class="packages" id="paquetes">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Paquetes</span>
+      <h2>Elige la experiencia para tu evento</h2>
+      <p>Cuatro formas de celebrar, cada una con su propio método de confirmación de asistencia.</p>
+    </div>
+    <div class="packages-grid" id="packagesGrid"></div>
+  </div>
+</section>
+
+<section class="form-section" id="formulario">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Contacto</span>
+      <h2>¿Lista para comenzar?</h2>
+      <p>Elige tu tipo de evento arriba en Servicios, completa el formulario y nosotros nos encargamos del resto.</p>
+    </div>
+    <div class="contact-card">
+      <p class="contact-note">¿Prefieres conversar primero? Escríbenos por WhatsApp.</p>
+      <a href="#" id="whatsappCta" class="btn btn-solid btn-whatsapp" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">Invitia Studio</div>
+        <p>Invitaciones digitales personalizadas para hacer inolvidable uno de los días más importantes.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Explorar</h4>
+        <a href="#nosotros">Nosotros</a>
+        <a href="#servicios">Servicios</a>
+        <a href="#paquetes">Paquetes</a>
+        <a href="#formulario">Contacto</a>
+      </div>
+      <div class="footer-col">
+        <h4>Contacto</h4>
+        <a href="#" id="footerWhatsapp">WhatsApp</a>
+        <a href="#">Instagram</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© <span id="year"></span> Invitia Studio. Todos los derechos reservados.</span>
+      <a href="admin.html" style="color:#8c8c8c; font-size:12.5px;">Administrador</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ================= CONFIGURACIÓN ================= */
+const WHATSAPP_NUMBER = '50672392134'; // Número de contacto del negocio
+
+/* ================= SERVICIOS ================= */
+const services = [
+  {key:'xv', mark:'XV', t:'XV Años', d:'Diseño exclusivo, creado desde cero para tu celebración.'},
+  {key:'bodas', mark:'B', t:'Bodas', d:'Diseño exclusivo, creado desde cero para tu celebración.'},
+  {key:'babyshower', mark:'BS', t:'Baby Shower', d:'Diseño exclusivo, creado desde cero para tu celebración.'},
+  {key:'cumpleanos', mark:'C', t:'Cumpleaños', d:'Diseño exclusivo, creado desde cero para tu celebración.'},
+  {key:'eventos', mark:'E', t:'Eventos', d:'Diseño exclusivo, creado desde cero para tu celebración.'},
+];
+document.getElementById('servicesGrid').innerHTML = services.map(s=>`
+  <div class="service-card reveal">
+    <div class="s-mark">${s.mark}</div>
+    <h3>${s.t}</h3>
+    <p>${s.d}</p>
+    <a href="form.html?tipo=${s.key}" class="btn btn-solid">Comenzar formulario</a>
+  </div>`).join('');
+
+/* ================= INCLUYE ================= */
+const features = [
+  {t:"Diseño personalizado", d:"Cada pieza creada desde cero para tu evento.", icon:"pencil"},
+  {t:"Fotografías", d:"Integradas de forma elegante en el diseño.", icon:"photo"},
+  {t:"Música personalizada", d:"La banda sonora perfecta para tu invitación.", icon:"music"},
+  {t:"Temporizador regresivo", d:"Cuenta regresiva en tiempo real para el evento.", icon:"clock"},
+  {t:"Ubicación interactiva", d:"Mapa integrado mediante Google Maps.", icon:"pin"},
+  {t:"Compatible con celulares", d:"Una experiencia perfecta en cualquier pantalla.", icon:"phone"},
+  {t:"Álbum colaborativo", d:"Invitados suben sus fotos del evento.", icon:"album"},
+  {t:"Sobre digital", d:"Apertura animada y personalizada.", icon:"envelope"},
+];
+const iconPaths = {
+  pencil:'M4 20 L8 19 L19 8 L16 5 L5 16 Z M14 7 L17 10',
+  photo:'M4 6 H20 V18 H4 Z M4 15 L9 10 L13 14 L16 11 L20 15 M9 9.5 a1 1 0 1 0 0.01 0',
+  music:'M9 18 V5 L20 3 V16 M9 18 a3 3 0 1 1 -6 0 a3 3 0 1 1 6 0 Z M20 16 a3 3 0 1 1 -6 0 a3 3 0 1 1 6 0 Z',
+  clock:'M12 22 a9 9 0 1 0 0 -18 a9 9 0 1 0 0 18 Z M12 7 V12 L16 14',
+  pin:'M12 22 C7 16 5 13 5 9 a7 7 0 1 1 14 0 C19 13 17 16 12 22 Z M12 12 a3 3 0 1 0 0 -6 a3 3 0 1 0 0 6 Z',
+  phone:'M8 2 H16 V22 H8 Z M11 19 H13',
+  album:'M4 5 H20 V19 H4 Z M4 9 H20 M8 5 V9',
+  envelope:'M3 6 H21 V18 H3 Z M3 6 L12 13 L21 6'
+};
+function iconSvg(name){
+  return `<svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="#1F1F1F" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="${iconPaths[name]}"/></svg>`;
+}
+document.getElementById('featuresGrid').innerHTML = features.map(f=>`
+  <div class="feature-card reveal">
+    ${iconSvg(f.icon)}
+    <h3>${f.t}</h3>
+    <p>${f.d}</p>
+  </div>`).join('');
+
+/* ================= PAQUETES ================= */
+const packages = [
+  {featured:true, tag:'Más completo', price:'₡48.000', name:'Invitación Premium Personalizada',
+    items:["Diseño desde cero","Nombre personalizado para cada invitado","Cupos disponibles","PDF individual por invitado","Música personalizada","Timer regresivo","Álbum compartido","Sobre personalizado"],
+    note:"Confirmaciones: organizamos las respuestas en un archivo Excel."},
+  {price:'₡43.000', name:'Invitación Personalizada',
+    items:["Diseño desde cero","Nombre personalizado de cada invitado","Cupos correspondientes","Música","Timer","Álbum compartido de fotos","Sobre personalizado"],
+    note:"Confirmaciones: mediante WhatsApp."},
+  {price:'₡43.000', name:'Invitación General',
+    items:["Diseño personalizado","Una invitación para todos","Cupos personalizados","Música","Timer","Álbum compartido de fotos","Sobre personalizado"],
+    note:"Confirmaciones: mediante Google Forms, nosotros las organizamos."},
+  {price:'₡43.000', name:'Invitación Web + Google Forms',
+    items:["Diseño desde cero","Fotografías","Música","Timer","Álbum compartido","Sobre personalizado","Nombre personalizado","Cupos"],
+    note:"Confirmaciones: Google Forms, acceso directo sin organizar respuestas."},
+];
+document.getElementById('packagesGrid').innerHTML = packages.map(p=>`
+  <div class="pkg-card reveal ${p.featured?'featured':''}">
+    ${p.tag?`<div class="pkg-tag">${p.tag}</div>`:''}
+    <div class="pkg-price">${p.price}</div>
+    <div class="pkg-name">${p.name}</div>
+    <ul class="pkg-list">${p.items.map(i=>`<li>${i}</li>`).join('')}</ul>
+    <div class="pkg-note">${p.note}</div>
+    <a href="#servicios" class="pkg-btn">Elegir este paquete</a>
+  </div>`).join('');
+
+/* ================= WHATSAPP GENERAL ================= */
+function waLink(msg){ return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`; }
+const generalMsg = 'Hola, me gustaría más información sobre las invitaciones digitales.';
+['whatsappCta','footerWhatsapp'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el) el.href = waLink(generalMsg);
+});
+
+document.getElementById('year').textContent = new Date().getFullYear();
+
+/* ================= SCROLL REVEAL ================= */
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); });
+},{threshold:0.15});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+document.querySelectorAll('.service-card, .feature-card, .pkg-card').forEach(el=>{el.classList.add('reveal'); io.observe(el);});
+
+/* ================= NAV ================= */
+const navEl = document.getElementById('mainNav');
+window.addEventListener('scroll', ()=> navEl.classList.toggle('scrolled', window.scrollY>20));
+document.getElementById('burgerBtn').addEventListener('click', ()=>{
+  const links = document.querySelector('nav.links');
+  const isOpen = links.style.display === 'flex';
+  links.style.display = isOpen ? 'none' : 'flex';
+  links.style.flexDirection = 'column';
+  links.style.position='absolute'; links.style.top='64px'; links.style.left='0'; links.style.right='0';
+  links.style.background='#FFFFFF'; links.style.padding='20px 28px'; links.style.borderBottom='1px solid var(--line)';
+});
+</script>
+</body>
+</html>
